@@ -19,8 +19,8 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Lambda function that interacts with DynamoDB
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler', // Ensure the path is correct and matches your Lambda code structure
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/operational')), // Correct path to your Lambda code
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/operational')),
       environment: {
         TABLE_NAME: table.tableName,
         PRIMARY_KEY: 'id',
@@ -33,19 +33,20 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Authorizer Lambda function
     const authorizerLambda = new lambda.Function(this, 'AuthorizerFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler', // Adjust the handler path
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/authorizer')), // Correct path to the authorizer Lambda code
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/authorizer')),
     });
 
     // Create API Gateway to trigger the Lambda
     const api = new apigateway.RestApi(this, 'PipelineApi', {
       restApiName: 'Serverless Pipeline Service',
       description: 'This service serves as an API Gateway for the Serverless Pipeline.',
+      apiKeySourceType: apigateway.ApiKeySourceType.HEADER, // Ensure API key is required
     });
 
     // Define a specific resource path /upload
     const uploadResource = api.root.addResource('upload');
-    
+
     // Create a Lambda Authorizer
     const authorizer = new apigateway.TokenAuthorizer(this, 'PipelineAuthorizer', {
       handler: authorizerLambda,
@@ -54,6 +55,30 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Integrate the Lambda function with this resource and apply the authorizer
     uploadResource.addMethod('POST', new apigateway.LambdaIntegration(pipelineLambda), {
       authorizer: authorizer,
+      apiKeyRequired: true, // Require API key for this method
+    });
+
+    // Create an API Key
+    const apiKey = new apigateway.ApiKey(this, 'ApiKey', {
+      apiKeyName: 'MyApiKey',
+    });
+
+    // Create a Usage Plan
+    const usagePlan = new apigateway.UsagePlan(this, 'UsagePlan', {
+      name: 'UsagePlan',
+      apiStages: [{
+        api: api,
+        stage: api.deploymentStage,
+      }],
+    });
+
+    // Add the API Key to the Usage Plan
+    usagePlan.addApiKey(apiKey);
+
+    // Output the API key value
+    new cdk.CfnOutput(this, 'ApiKeyValue', {
+      value: apiKey.keyId,
+      description: 'API Key for accessing the API',
     });
   }
 }
