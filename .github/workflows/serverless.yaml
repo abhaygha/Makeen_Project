@@ -49,7 +49,9 @@ jobs:
           fi
 
       - name: Synthesize CloudFormation templates
-        run: cdk synth
+        run: |
+             rm -rf cdk.out 
+             cdk synth
 
       - name: Diff CDK Stack
         run: cdk diff
