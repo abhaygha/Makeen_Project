@@ -20,7 +20,7 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'operational/index.handler', // Ensure the path is correct and matches your Lambda code structure
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lib/lambda')),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lib')),
       environment: {
         TABLE_NAME: table.tableName,
         PRIMARY_KEY: 'id',
