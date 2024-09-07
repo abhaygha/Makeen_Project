@@ -20,7 +20,7 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'operational/index.handler', // Ensure the path is correct and matches your Lambda code structure
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lib')),
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
       environment: {
         TABLE_NAME: table.tableName,
         PRIMARY_KEY: 'id',
@@ -29,6 +29,13 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
 
     // Grant Lambda permission to interact with DynamoDB
     table.grantReadWriteData(pipelineLambda);
+
+    // Authorizer Lambda function
+    const authorizerLambda = new lambda.Function(this, 'AuthorizerFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'authorizer/index.handler', // Adjust the handler path
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda')),
+    });
 
     // Create API Gateway to trigger the Lambda
     const api = new apigateway.RestApi(this, 'PipelineApi', {
@@ -39,7 +46,14 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Define a specific resource path /upload
     const uploadResource = api.root.addResource('upload');
     
-    // Integrate the Lambda function with this resource
-    uploadResource.addMethod('POST', new apigateway.LambdaIntegration(pipelineLambda));
+    // Create a Lambda Authorizer
+    const authorizer = new apigateway.TokenAuthorizer(this, 'PipelineAuthorizer', {
+      handler: authorizerLambda,
+    });
+
+    // Integrate the Lambda function with this resource and apply the authorizer
+    uploadResource.addMethod('POST', new apigateway.LambdaIntegration(pipelineLambda), {
+      authorizer: authorizer,
+    });
   }
 }
