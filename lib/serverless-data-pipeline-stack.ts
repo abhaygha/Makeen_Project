@@ -3,6 +3,7 @@ import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 
 export class ServerlessDataPipelineStack extends cdk.Stack {
@@ -16,6 +17,15 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Change this in production!
     });
 
+    // Define the IAM role for the pipeline Lambda function
+    const pipelineLambdaRole = new iam.Role(this, 'PipelineLambdaRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaDynamoDBExecutionRole'),
+      ],
+    });
+
     // Lambda function that interacts with DynamoDB
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
@@ -25,16 +35,26 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
         TABLE_NAME: table.tableName,
         PRIMARY_KEY: 'id',
       },
+      role: pipelineLambdaRole, // Attach IAM role to Lambda function
     });
 
     // Grant Lambda permission to interact with DynamoDB
     table.grantReadWriteData(pipelineLambda);
+
+    // Define the IAM role for the authorizer Lambda function
+    const authorizerLambdaRole = new iam.Role(this, 'AuthorizerLambdaRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+    });
 
     // Authorizer Lambda function
     const authorizerLambda = new lambda.Function(this, 'AuthorizerFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/authorizer')),
+      role: authorizerLambdaRole, // Attach IAM role to Lambda function
     });
 
     // Create API Gateway to trigger the Lambda
