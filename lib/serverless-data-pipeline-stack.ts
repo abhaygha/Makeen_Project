@@ -19,7 +19,7 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Lambda function that interacts with DynamoDB
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'operational/index.handler',
+      handler: 'operational/index.handler', // Ensure the path is correct and matches your Lambda code structure
       code: lambda.Code.fromAsset(path.join(__dirname, '../lib/lambda')),
       environment: {
         TABLE_NAME: table.tableName,
@@ -30,18 +30,16 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Grant Lambda permission to interact with DynamoDB
     table.grantReadWriteData(pipelineLambda);
 
-    //Create API Gateway to trigger the Lambda
+    // Create API Gateway to trigger the Lambda
     const api = new apigateway.RestApi(this, 'PipelineApi', {
-        restApiName: 'Serverless Pipeline Service',
-        description: 'This service serves as an API Gateway for the Serverless Pipeline.',
-      });
-    const uploadResource = api.root.addResource('upload');
+      restApiName: 'Serverless Pipeline Service',
+      description: 'This service serves as an API Gateway for the Serverless Pipeline.',
+    });
 
-      // Integrate the Lambda function with this resource
+    // Define a specific resource path /upload
+    const uploadResource = api.root.addResource('upload');
+    
+    // Integrate the Lambda function with this resource
     uploadResource.addMethod('POST', new apigateway.LambdaIntegration(pipelineLambda));
-  
-      // Create a POST method on the API Gateway
-    const lambdaIntegration = new apigateway.LambdaIntegration(pipelineLambda);
-    api.root.addMethod('POST', lambdaIntegration);
   }
 }
