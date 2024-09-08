@@ -29,7 +29,7 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Lambda function that interacts with DynamoDB
     const pipelineLambda = new lambda.Function(this, 'PipelineFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.ts',
+      handler: 'handler.handler',  // Corrected handler file and function
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/operational')),
       environment: {
         TABLE_NAME: table.tableName,
@@ -52,7 +52,7 @@ export class ServerlessDataPipelineStack extends cdk.Stack {
     // Authorizer Lambda function
     const authorizerLambda = new lambda.Function(this, 'AuthorizerFunction', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.ts',
+      handler: 'handler.handler',  // Corrected handler file and function
       code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/authorizer')),
       role: authorizerLambdaRole, // Attach IAM role to Lambda function
     });
