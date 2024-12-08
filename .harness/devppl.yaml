@@ -71,61 +71,25 @@ pipeline:
         description: ""
         type: Deployment
         spec:
-          deploymentType: Kubernetes
+          deploymentType: NativeHelm
+          execution:
+            steps:
+              - step:
+                  type: HelmDeploy
+                  name: HelmDeploy_1
+                  identifier: HelmDeploy_1
+                  spec:
+                    skipDryRun: false
+                    ignoreReleaseHistFailStatus: false
+                  timeout: 10m
+            rollbackSteps: []
           service:
             serviceRef: devsvc
           environment:
             environmentRef: dev
             deployToAll: false
             infrastructureDefinitions:
-              - identifier: devinfra1
-          execution:
-            steps:
-              - stepGroup:
-                  name: Canary Deployment
-                  identifier: canaryDeployment
-                  steps:
-                    - step:
-                        name: Canary Deployment
-                        identifier: canaryDeployment
-                        type: K8sCanaryDeploy
-                        timeout: 10m
-                        spec:
-                          instanceSelection:
-                            type: Count
-                            spec:
-                              count: 1
-                          skipDryRun: false
-                    - step:
-                        name: Canary Delete
-                        identifier: canaryDelete
-                        type: K8sCanaryDelete
-                        timeout: 10m
-                        spec: {}
-              - stepGroup:
-                  name: Primary Deployment
-                  identifier: primaryDeployment
-                  steps:
-                    - step:
-                        name: Rolling Deployment
-                        identifier: rollingDeployment
-                        type: K8sRollingDeploy
-                        timeout: 10m
-                        spec:
-                          skipDryRun: false
-            rollbackSteps:
-              - step:
-                  name: Canary Delete
-                  identifier: rollbackCanaryDelete
-                  type: K8sCanaryDelete
-                  timeout: 10m
-                  spec: {}
-              - step:
-                  name: Rolling Rollback
-                  identifier: rollingRollback
-                  type: K8sRollingRollback
-                  timeout: 10m
-                  spec: {}
+              - identifier: devinfra
         tags: {}
         failureStrategies:
           - onFailure:
