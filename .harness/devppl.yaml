@@ -55,12 +55,14 @@ pipeline:
                       args: {}
                     mode: orchestration
                     config: default
-          platform:
-            os: Linux
-            arch: Amd64
-          runtime:
-            type: Docker
-            spec: {}
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: account.harnessdevcluster
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
         when:
           pipelineStatus: Success
     - stage:
