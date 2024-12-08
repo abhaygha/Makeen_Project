@@ -1,0 +1,5 @@
+service:
+  name: devsvc
+  identifier: devsvc
+  orgIdentifier: default
+  projectIdentifier: default_project
