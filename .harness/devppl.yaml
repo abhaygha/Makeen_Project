@@ -37,6 +37,7 @@ pipeline:
                     region: us-east-1
                     bucket: " harnessartifacts"
                     sourcePath: /artifacts
+                    endpoint: s3://arn:aws:s3:us-east-1:891377120087:accesspoint/devaccess
               - step:
                   type: BuildAndPushECR
                   name: BuildAndPushECR_1
