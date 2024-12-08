@@ -29,14 +29,39 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: BuildAndPushDockerRegistry
-                  name: BuildAndPushDockerRegistry_1
-                  identifier: BuildAndPushDockerRegistry_1
+                  type: S3Upload
+                  name: S3Upload_1
+                  identifier: S3Upload_1
                   spec:
-                    connectorRef: account.harnessImage
-                    repo: abhaydocli
+                    connectorRef: awsdev
+                    region: us-east-1
+                    bucket: " harnessartifacts"
+                    sourcePath: /artifacts
+              - step:
+                  type: BuildAndPushECR
+                  name: BuildAndPushECR_1
+                  identifier: BuildAndPushECR_1
+                  spec:
+                    connectorRef: awsdev
+                    region: us-east-1
+                    account: "891377120087"
+                    imageName: harnessimage
                     tags:
-                      - devtag
+                      - dev
+              - step:
+                  type: Semgrep
+                  name: Semgrep_1
+                  identifier: Semgrep_1
+                  spec:
+                    target:
+                      detection: auto
+                      type: repository
+                    advanced:
+                      log:
+                        level: info
+                      args: {}
+                    mode: orchestration
+                    config: default
     - stage:
         name: devdeploy
         identifier: devdeploy
