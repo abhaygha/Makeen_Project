@@ -63,6 +63,8 @@ pipeline:
                       args: {}
                     mode: orchestration
                     config: default
+        when:
+          pipelineStatus: Success
     - stage:
         name: devdeploy
         identifier: devdeploy
